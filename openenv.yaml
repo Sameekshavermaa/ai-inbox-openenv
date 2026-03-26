@@ -1,0 +1,7 @@
+name: ai-inbox-env
+description: Emotion-aware inbox environment
+entrypoint: env:InboxEnv
+tasks:
+  - easy
+  - medium
+  - hard
