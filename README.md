@@ -1,7 +1,6 @@
-# 🧠 AI Inbox: Emotion-Aware OpenEnv Environment
-
-> Evaluating AI agents on emotional intelligence, prioritization, and decision-making under cognitive overload.
-
+---
+🧠 AI Inbox: Emotion-Aware OpenEnv Environment
+ Evaluating AI agents on emotional intelligence, prioritization, and decision-making under cognitive overload.
 ---
 
 ## 🚀 Overview
