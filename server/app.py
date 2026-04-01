@@ -1,6 +1,10 @@
 from fastapi import FastAPI
-from env import InboxEnv
-from models import Action
+from ..env import InboxEnv
+from ..models import Action
+import sys
+import os
+
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 app = FastAPI()
 env = InboxEnv()
