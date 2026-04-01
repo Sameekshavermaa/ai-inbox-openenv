@@ -1,10 +1,50 @@
+from fastapi import FastAPI
 from env import InboxEnv
+from models import Action
 
-print("🚀 Starting AI Inbox Environment...")
-
+app = FastAPI()
 env = InboxEnv()
-obs = env.reset()
 
-print("✅ Environment started successfully")
-print("📩 Emails Loaded:", len(obs.emails))
-print("🧠 Overwhelm Score:", obs.overwhelm_score)
+# ✅ ROOT (just for sanity)
+@app.get("/")
+def home():
+    return {"status": "running"}
+
+# ✅ RESET (POST - used by OpenEnv)
+@app.post("/reset")
+def reset():
+    obs = env.reset()
+    return {
+        "emails": obs.emails,
+        "overwhelm_score": obs.overwhelm_score
+    }
+
+# ✅ RESET (GET - for browser testing)
+@app.get("/reset")
+def reset_get():
+    obs = env.reset()
+    return {
+        "emails": obs.emails,
+        "overwhelm_score": obs.overwhelm_score
+    }
+
+# ✅ STEP
+@app.post("/step")
+def step(action: dict):
+    action_obj = Action(**action)
+    obs, reward, done, info = env.step(action_obj)
+
+    return {
+        "observation": {
+            "emails": obs.emails,
+            "overwhelm_score": obs.overwhelm_score
+        },
+        "reward": reward.score,
+        "done": done,
+        "info": info
+    }
+
+# ✅ STATE
+@app.get("/state")
+def state():
+    return env.state()

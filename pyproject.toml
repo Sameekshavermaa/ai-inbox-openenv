@@ -1,0 +1,17 @@
+[project]
+name = "ai-inbox-openenv"
+version = "0.1.0"
+description = "Emotion-aware OpenEnv inbox environment for evaluating AI agents"
+authors = [
+    {name = "Sameeksha Verma"}
+]
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "pydantic",
+    "requests"
+]
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"

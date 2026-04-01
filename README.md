@@ -1,6 +1,7 @@
----
-🧠 AI Inbox: Emotion-Aware OpenEnv Environment
- Evaluating AI agents on emotional intelligence, prioritization, and decision-making under cognitive overload.
+# 🧠 AI Inbox: Emotion-Aware OpenEnv Environment
+
+> Evaluating AI agents on emotional intelligence, prioritization, and decision-making under cognitive overload.
+
 ---
 
 ## 🚀 Overview
@@ -139,6 +140,7 @@ pip install -r requirements.txt
 
 ## 📁 Project Structure
 
+```
 ai-inbox-openenv/
 │
 ├── env.py
@@ -149,6 +151,7 @@ ai-inbox-openenv/
 ├── openenv.yaml
 ├── Dockerfile
 └── README.md
+```
 
 ---
 
