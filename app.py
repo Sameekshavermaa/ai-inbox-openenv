@@ -1,6 +1,6 @@
 from fastapi import FastAPI
-from ..env import InboxEnv
-from ..models import Action
+from env import InboxEnv
+from models import Action
 import sys
 import os
 
