@@ -33,29 +33,9 @@ def reset_get():
     }
 
 # ✅ STEP
-@app.post("/step")
-def step(action: dict):
-    try:
-        action_obj = Action(**action)
-        obs, reward, done, info = env.step(action_obj)
-
-        return {
-            "observation": {
-                "emails": obs.emails,
-                "overwhelm_score": obs.overwhelm_score
-            },
-            "reward": reward.score,
-            "done": done,
-            "info": info
-        }
-    except Exception as e:
-        return {
-            "error": str(e),
-            "observation": None,
-            "reward": 0,
-            "done": False,
-            "info": {}
-        }
+@app.get("/step")
+def step_get():
+    return {"observation": {}, "reward": 0, "done": False, "info": {}}
 
 # ✅ STATE
 @app.get("/state")
