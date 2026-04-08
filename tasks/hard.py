@@ -8,3 +8,9 @@ def grade(action, email):
     else:
         score = 0.05
     return score
+
+task = {
+    "name": "hard",
+    "description": "Action recommendation under cognitive load",
+    "grader": grade,
+}
