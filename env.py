@@ -52,4 +52,4 @@ class InboxEnv:
             score += 0.7
         else:
             score -= 0.5
-       return max(0.05, min(0.95, score))  # ✅ strictly between 0 and 1
+        return max(0.05, min(0.95, score))  # ✅ strictly between 0 and 1
