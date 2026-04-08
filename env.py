@@ -2,6 +2,7 @@ import random
 from models import Observation, Action, Reward
 
 class InboxEnv:
+
     def __init__(self):
         self.emails = []
         self.current_step = 0
@@ -13,12 +14,9 @@ class InboxEnv:
 
     def step(self, action: Action):
         email = self.emails[self.current_step]
-
         reward = self.evaluate(action, email)
-
         self.current_step += 1
         done = self.current_step >= len(self.emails)
-
         return (
             Observation(emails=self.emails, overwhelm_score=self.calc_overwhelm()),
             Reward(score=reward),
@@ -44,7 +42,6 @@ class InboxEnv:
 
     def evaluate(self, action, email):
         score = 0
-
         if action.emotion == email["emotion"]:
             score += 0.3
         if action.priority == email["priority"]:
@@ -55,5 +52,4 @@ class InboxEnv:
             score += 0.7
         else:
             score -= 0.5
-
-        return max(0.0, min(1.0, score))
+        return max(0.05, min(0.95, score))  # ✅ strictly between 0 and 1
