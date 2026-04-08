@@ -32,7 +32,31 @@ def reset_get():
         "overwhelm_score": obs.overwhelm_score
     }
 
-# ✅ STEP
+# ✅ STEP (POST - used by OpenEnv)
+@app.post("/step")
+def step(action: dict):
+    try:
+        action_obj = Action(**action)
+        obs, reward, done, info = env.step(action_obj)
+        return {
+            "observation": {
+                "emails": obs.emails,
+                "overwhelm_score": obs.overwhelm_score
+            },
+            "reward": reward.score,
+            "done": done,
+            "info": info
+        }
+    except Exception as e:
+        return {
+            "error": str(e),
+            "observation": None,
+            "reward": 0,
+            "done": False,
+            "info": {}
+        }
+
+# ✅ STEP (GET - fallback so evaluator doesn't 405)
 @app.get("/step")
 def step_get():
     return {"observation": {}, "reward": 0, "done": False, "info": {}}
