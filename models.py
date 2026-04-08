@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from typing import List
 
 class Email(BaseModel):
@@ -17,3 +17,7 @@ class Action(BaseModel):
 
 class Reward(BaseModel):
     score: float
+
+    @field_validator("score")
+    def clamp_score(cls, v):
+        return max(0.05, min(0.95, v))
