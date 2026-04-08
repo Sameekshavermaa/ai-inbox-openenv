@@ -1,6 +1,10 @@
 def grade(action, email):
     if email["priority"] == "high" and action == "reply":
-        return 1.0
+        score = 0.95
     elif email["priority"] == "low" and action == "ignore":
-        return 1.0
-    return 0.0
+        score = 0.95
+    elif email["priority"] == "medium":
+        score = 0.5
+    else:
+        score = 0.05
+    return score
