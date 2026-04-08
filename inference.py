@@ -7,20 +7,21 @@ from openai import OpenAI
 # API_BASE_URL = evaluator's LiteLLM server (for LLM calls)
 API_BASE_URL = os.getenv("API_BASE_URL", "https://litellm.sclr.ac")
 MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4o-mini")
-HF_TOKEN = os.getenv("HF_TOKEN", "dummy-token")
+HF_TOKEN = os.getenv("HF_TOKEN")
 
 # Your own HF Space environment server (for reset/step)
 ENV_BASE_URL = os.getenv("ENV_BASE_URL", "https://neuralaesthetics-ai-inbox-openenv.hf.space")
 
 # OpenAI client pointing to evaluator's LiteLLM
 client = None
-try:
-    client = OpenAI(
-        base_url=API_BASE_URL,
-        api_key=HF_TOKEN
-    )
-except Exception as e:
-    print(f"[WARNING] Failed to initialize OpenAI client: {str(e)}")
+if HF_TOKEN:
+    try:
+        client = OpenAI(
+            base_url=API_BASE_URL,
+            api_key=HF_TOKEN
+        )
+    except Exception as e:
+        print(f"[WARNING] Failed to initialize OpenAI client: {str(e)}")
 
 print("[START] Beginning inference")
 
