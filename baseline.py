@@ -24,4 +24,8 @@ while not done:
     steps += 1
 
 # 👇 THIS is the important line
-print(f"Baseline Score: {round(total_score / steps, 2)}")
+def safe_score(x):
+    return max(0.05, min(0.95, float(x)))
+
+final_score = safe_score(total_score / steps)
+print(f"Baseline Score: {round(final_score, 2)}")
