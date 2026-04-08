@@ -1,7 +1,16 @@
 name: ai-inbox-env
-description: Emotion-aware inbox environment
+version: 0.1.0
+description: Emotion-aware inbox environment to evaluate AI agents on prioritization and decision-making
 entrypoint: env:InboxEnv
+type: http
+spec_version: "1.0"
 tasks:
-  - easy
-  - medium
-  - hard
+  - id: easy
+    name: "Easy Task"
+    description: "Emotion and urgency classification of inbox emails."
+  - id: medium
+    name: "Medium Task"
+    description: "Email prioritization ranking under cognitive load."
+  - id: hard
+    name: "Hard Task"
+    description: "Action recommendation for emails based on priority and context."
