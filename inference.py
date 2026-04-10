@@ -2,112 +2,114 @@ import requests
 import os
 import sys
 import time
+import json
 from openai import OpenAI
 
-# ENV VARIABLES
-API_BASE_URL = os.getenv("API_BASE_URL", "https://neuralaesthetics-ai-inbox-openenv.hf.space")
+API_BASE_URL = os.getenv("API_BASE_URL", "https://litellm.sclr.ac")
 MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4o-mini")
 HF_TOKEN = os.getenv("HF_TOKEN")
 
-# OpenAI client (required)
-client = OpenAI(base_url=API_BASE_URL, api_key=HF_TOKEN or "dummy")
+if HF_TOKEN is None:
+    raise ValueError("HF_TOKEN environment variable is required")
 
+ENV_BASE_URL = os.getenv("ENV_BASE_URL", "https://neuralaesthetics-ai-inbox-openenv.hf.space")
 
-def run_task(task_id: str):
-    base_url = os.getenv("OPENENV_BASE_URL", "https://neuralaesthetics-ai-inbox-openenv.hf.space")
+client = OpenAI(base_url=API_BASE_URL, api_key=HF_TOKEN)
 
-    print(f"[START] task={task_id} env=ai_inbox model={MODEL_NAME}")
+TASKS = ["easy", "medium", "hard"]
 
-    # RESET
-    for attempt in range(3):
-        try:
-            res = requests.post(f"{base_url}/reset", json={"task": task_id}, timeout=10)
-            res.raise_for_status()
-            obs = res.json()
-            break
-        except Exception as e:
-            if attempt == 2:
-                print(f"[ERROR] Reset failed: {e}", file=sys.stderr)
-                print(f"[END] success=false steps=0 score=0.05 rewards=")
-                return
-            time.sleep(1)
-
-    done = False
+for task_name in TASKS:
+    rewards_list = []
     step_count = 0
-    total_reward = 0.0
-    rewards = []   # ✅ FIXED
+    success = False
 
-    while not done:
-        emails = obs.get("emails", [])
+    print(f"[START] task={task_name} env=ai-inbox model={MODEL_NAME}")
 
-        if not isinstance(emails, list) or step_count >= len(emails):
-            break
+    try:
+        # Reset environment
+        max_retries = 3
+        reset_response = None
+        for attempt in range(max_retries):
+            try:
+                res = requests.post(f"{ENV_BASE_URL}/reset", timeout=15)
+                res.raise_for_status()
+                reset_response = res.json()
+                break
+            except requests.exceptions.RequestException as e:
+                if attempt < max_retries - 1:
+                    time.sleep(2)
+                else:
+                    raise Exception(f"Reset failed: {str(e)}")
 
-        email = emails[step_count]
+        obs = reset_response
+        done = False
 
-        # Try LLM
-        try:
-            import json
-            prompt = f"Email: {email.get('text', '')}. Reply with JSON: {{\"emotion\": \"angry|neutral|positive\", \"priority\": \"high|medium|low\", \"decision\": \"reply|schedule|ignore\"}}"
+        while not done:
+            emails = obs.get("emails", [])
+            if step_count >= len(emails):
+                break
 
-            response = client.chat.completions.create(
-                model=MODEL_NAME,
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.0
-            )
+            email = emails[step_count]
+            email_text = email.get("text", "").lower()
+            last_error = None
 
-            raw = response.choices[0].message.content.strip()
-            action = json.loads(raw)
+            # Use LLM
+            try:
+                prompt = f"""Analyze this email and respond ONLY with a JSON object with these exact keys:
+- emotion: one of "angry", "neutral", "positive"
+- priority: one of "high", "medium", "low"
+- decision: one of "reply", "schedule", "ignore"
 
-        except Exception:
-            # Fallback logic
-            text = email.get("text", "").lower()
+Email: {email.get('text', '')}
 
-            if "unhappy" in text or "urgent" in text:
-                action = {"emotion": "angry", "priority": "high", "decision": "reply"}
-            elif "sale" in text or "offer" in text:
-                action = {"emotion": "positive", "priority": "low", "decision": "ignore"}
-            else:
-                action = {"emotion": "neutral", "priority": "medium", "decision": "schedule"}
+Respond with only the JSON, no explanation."""
 
-        # STEP
-        try:
-            res = requests.post(f"{base_url}/step", json=action, timeout=10)
-            res.raise_for_status()
-            data = res.json()
+                response = client.chat.completions.create(
+                    model=MODEL_NAME,
+                    messages=[{"role": "user", "content": prompt}],
+                    max_tokens=100,
+                    temperature=0
+                )
+                text = response.choices[0].message.content.strip()
+                text = text.replace("```json", "").replace("```", "").strip()
+                action = json.loads(text)
+            except Exception as e:
+                last_error = str(e)
+                # Rule-based fallback
+                if any(w in email_text for w in ["urgent", "asap", "unhappy", "angry", "frustrated", "critical"]):
+                    action = {"emotion": "angry", "priority": "high", "decision": "reply"}
+                elif any(w in email_text for w in ["sale", "offer", "deal", "promo", "discount"]):
+                    action = {"emotion": "positive", "priority": "low", "decision": "ignore"}
+                else:
+                    action = {"emotion": "neutral", "priority": "medium", "decision": "schedule"}
 
-            reward = float(data.get("reward", 0.0))
-            done = data.get("done", False)
-            obs = data.get("observation", {})
+            # Step environment
+            try:
+                res = requests.post(f"{ENV_BASE_URL}/step", json=action, timeout=15)
+                res.raise_for_status()
+                data = res.json()
 
-            rewards.append(reward)
-            total_reward += reward
+                if "error" in data:
+                    raise Exception(data["error"])
 
-            print(f"[STEP] step={step_count} action={action.get('decision','none')} reward={round(reward,2)} done={str(done).lower()} error=null")
+                reward = data.get("reward", 0)
+                rewards_list.append(reward)
+                obs = data.get("observation", {})
+                done = data.get("done", False)
+                error_field = last_error if last_error else "null"
 
-            step_count += 1
+                print(f"[STEP] step={step_count + 1} action={json.dumps(action)} reward={reward:.2f} done={'true' if done else 'false'} error={error_field}")
+                step_count += 1
 
-        except Exception as e:
-            print(f"[STEP] step={step_count} action=error reward=0.05 done=true error={str(e)}")
-            break
+                if done:
+                    success = True
 
-    # FINAL SCORE
-    score = total_reward / step_count if step_count > 0 else 0.0
-    score = max(0.05, min(0.95, score))  # clamp strictly between (0,1)
+            except Exception as e:
+                print(f"[STEP] step={step_count + 1} action={json.dumps(action)} reward=0.00 done=false error={str(e)}")
+                break
 
-    success = score > 0
-    rewards_str = ",".join([f"{round(r,2)}" for r in rewards])
+    except Exception as e:
+        print(f"[STEP] step={step_count + 1} action={{}} reward=0.00 done=false error={str(e)}", file=sys.stderr)
 
-    print(f"[END] success={str(success).lower()} steps={step_count} score={round(score,2)} rewards={rewards_str}")
-
-
-def run_inference():
-    tasks = ["easy", "medium", "hard"]
-
-    for task in tasks:
-        print(f"\n--- Running task: {task} ---")
-        run_task(task)
-
-
-if __name__ == "__main__":
-    run_inference()
+    rewards_str = ",".join(f"{r:.2f}" for r in rewards_list) if rewards_list else "0.00"
+    print(f"[END] success={'true' if success else 'false'} steps={step_count} rewards={rewards_str}")
